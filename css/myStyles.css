@@ -1,0 +1,67 @@
+button {
+  background: none;
+  border: none;
+  outline: none;
+  font-family: arial, sans-serif;
+  color: #aaa;
+  margin-right: auto;
+  text-align: left;
+  cursor: pointer;
+  display: contents;
+
+}
+
+button:hover {
+  color: #fff;
+}
+
+#mydiv {
+  max-width: 290px;
+  z-index: 900;
+}
+
+#mydivheader {
+  overflow-wrap: break-word;
+  max-width: 290px;
+  position: absolute;
+  font-size: 13.3333px;
+  user-select: text;
+  padding: 10px;
+  z-index: 999999;
+}
+
+.popOutBox {
+  color: #fff;
+}
+
+.light {
+  color: #60626e;
+}
+
+.light:hover {
+  color: #666666;
+}
+
+.textBox {
+  padding-right: 15px;
+  padding-top: 3px;
+  word-wrap: break-word;
+}
+
+.textDark {
+  background-color: #181818;
+  color: #aaa;
+}
+
+.textlight {
+  color: #60626e;
+  background-color: #f9f9f9;
+}
+
+.textBox.dark:hover {
+  color: #aaa;
+}
+
+
+
+

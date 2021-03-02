@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="css/popup.css">
+    
+    <body>
+        <div class="container-fluid main-container">
+            <div class="row main-row">
+                <div class="col left">
+                    <div class="form-group"> 
+                        <div class="inputHeader">Set View Description Text</div>
+                        <input class="form-control bg-dark input" type="text" id="openText" placeholder="For View"> </input>
+                    
+                        <button class="btn btn-dark" id="openButton">Set</button>
+                        <small class="set form-text text-light" id="openSet"></small>
+    
+                        <div class="inputHeader">Set Hide Description Text</div>
+                        <input class="form-control bg-dark input" type="text" id="closeText" placeholder="For Hide"> </input>
+    
+                        <button class="btn btn-dark" id="closeButton">Set</button>
+                        <small class="set form-text text-light" id="closeSet"></small>
+    
+                        <button class="btn btn-dark" id="reset">Reset</button>
+                    </div>
+                </div>
+                <div class="col text-center">
+                    <div class="form-group">
+                        <div class="inputHeader">Use API Key to Access Full Descriptions</div>
+                        <a class="btn btn-link" target="_blank" href="https://github.com/despreview/Youtube-Description-Preview/">Instructions</a>
+                        <div class="inputHeader">Enter Google API Key</div>
+                        <input class="form-control bg-dark input" id="apikeyText" placeholder="API Key">
+                        <button class="btn btn-dark" id="apikey">Set Key</button>
+                    </div>
+                </div>    
+            </div>
+        </div>
+        <script src="popup.js"></script>
+    </body>
+</html>

@@ -265,7 +265,7 @@ function addButton() {
 			currUrl = channelNames[x].href;
             foundURL = true;
 
-            let id = parseUrlIds(currUrl);
+            let id = parseUrlIds([currUrl]);
             if (!ids.includes(id)) {
                 if (id === "") return;
                 ids.push(id);

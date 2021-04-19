@@ -330,7 +330,7 @@ function addButton() {
 					}
 					return;
 				} 
-				let box = document.createElement("p");
+				let box = document.createElement("a");
 				box.className = "textBox";
 				if (!dark) {
 					box.className += " light";

@@ -222,6 +222,21 @@ function cleanID(url) {
 	return id;
 }
 
+// Removes timestamp from full url so it works well with the 
+function cleanURL(url) { 
+	let searchTerm = "=";
+	let index1 = url.indexOf(searchTerm);
+	let newUrl = url.substring(index1 + 1) 
+	let index2 = newUrl.indexOf(searchTerm);
+	let id = "";
+	if (index2 === -1) {
+		id = url;
+	} else {
+		id = url.substring(0, index1 + index2 - 1);
+	}
+	return id;
+}
+
 /* 
     This is needed to clear out old video values when user uses a "paperTab".
     "paperTab" is used when on a channel's youtube page and one of the banner selectors are used.
@@ -266,9 +281,9 @@ function addButton() {
             foundURL = true;
 
             let id = parseUrlIds([currUrl]);
-            if (!ids.includes(id)) {
+            if (!ids.includes(id[0])) {
                 if (id === "") return;
-                ids.push(id);
+                ids.push(id[0]);
             }
 		}
         
@@ -277,6 +292,7 @@ function addButton() {
 			let home = false;
 			let subs = false;
 			let sidebar = false;
+			let movie = false;
 			// Test for home page
 			if (parents.includes("style-scope ytd-rich-grid-media") && !parents.includes("grid style-scope ytd-rich-movie-renderer")) {
 				home = true;
@@ -287,7 +303,10 @@ function addButton() {
 			if (parents.includes("style-scope ytd-compact-video-renderer") && !home && !subs) {
 				sidebar = true;
 			}
-			if (sidebar && !home && !subs) { continue; }
+			if (parents.includes("style-scope ytd-rich-grid-movie")) {
+				movie = true;
+			}
+			if ((sidebar || movie) && !home && !subs) { continue; }
 			if (!home && !subs && !sidebar) {
 				parents = [];
 				continue;
@@ -358,7 +377,7 @@ function addButton() {
 					this.parentNode.getElementsByClassName("expansionButton")[0].disabled = false;
 					this.parentNode.getElementsByClassName("expansionButton")[0].hidden = false;
 				} catch (e) {
-					console.log(e);
+					console.error(e);
 				}
                 
 			});
@@ -378,23 +397,13 @@ function addButton() {
 // Would be slow although full page doesn't load from these requests, only meta tags and some skeleton html.
 function getSourceAsDOM(url)
 {
-	let xhr = new XMLHttpRequest();
-	if (url === undefined) {
-		return;
-	}
-	xhr.open("GET",url,true);
-	let parser = new DOMParser();
-	xhr.onload = function(e) {
-		if (xhr.readyState === 4) {
-			if (xhr.status === 200) {
-				readNewDom(parser.parseFromString(xhr.responseText,"text/html"), xhr.responseURL);
-			} else {
-				console.error(xhr.statusText);
-				console.log("Couldn't read " + url);
-			}
-		} 
-	};
-	xhr.send();
+	fetch(url).then(function (response) {
+		return response.text();
+	}).then(function (html) {
+		readNewDom(html, url);
+	}).catch(function (err) {
+		console.warn('Something went wrong.', err);
+	});
     
        
 }
@@ -403,9 +412,8 @@ function getSourceAsDOM(url)
 // Adds to the url to description object 
 function readNewDom(dom, url) {
 	try {
-
-		URLtoDes[url] = dom.querySelectorAll("meta[property=\"og:description\"]")[0].content;
-
+		var doc = new DOMParser().parseFromString(dom, "text/html");
+		URLtoDes[url] = doc.querySelectorAll("meta[property=\"og:description\"]")[0].content;
 	} catch (e) {
 		console.error(e, [url]);
 	}

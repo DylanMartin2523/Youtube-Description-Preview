@@ -1,23 +1,25 @@
 {
   "name": "Youtube Description Preview",
-  "version": "1.29",
+  "version": "1.302",
   "description": "Provides a unobtrusive description preview under youtube video thumbnails.",
   "permissions": ["declarativeContent", "storage"],
   "content_scripts": [
         {
             "matches": ["*://*.youtube.com/*"],
             "js": ["contentScript.js"],
-            "css": ["css/myStyles.css"],
+            "css": ["myStyles.css"],
             "run_at": "document_end"
         }
         
   ],
   "background": {
-    "scripts": ["background.js"],
-    "persistent": false
+    "service_worker": "background.js"
   },
-  "web_accessible_resources": ["contentScript.js", "images/View.png", "image/Hide.png"],
-  "page_action": {
+  "web_accessible_resources": [{ 
+  "resources": ["contentScript.js", "images/View.png", "image/Hide.png"],
+  "matches": ["*://*.youtube.com/*"]
+}],
+  "action": {
     "default_popup": "popup.html",
     "default_icon": {
       "16": "images/DP16.png",
@@ -32,5 +34,5 @@
     "48": "images/DP48.png",
     "128": "images/DP128.png"
   },
-  "manifest_version": 2
+  "manifest_version": 3
 }

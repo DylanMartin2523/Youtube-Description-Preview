@@ -73,9 +73,10 @@ function handleAPI() {
 
 	// Sends promise to background.js through chrome.runtime.sendMessage with urls to use for the api.
 	for (let x = 0; x < batches.length; x++) {
+		k = batches[x]
 		let promise = new Promise((resolve, reject) => {
 			chrome.runtime.sendMessage(
-				{ contentScriptQuery: "Des", videoIds: batches[x] },
+				{ contentScriptQuery: "Des", videoIds: k },
 				function (data) {
 					if (typeof data === "undefined") {
 						console.error("error getting video");
@@ -89,7 +90,43 @@ function handleAPI() {
 							let end = item.snippet.description.length > 160 ? 160 : item.snippet.description.length
 							let des = end == 160 ? item.snippet.description.substring(0, end) + " ..." : item.snippet.description
 							URLtoDes["https://www.youtube.com/watch?v=" + item.id] = des
-							addFullDes(item);
+							addItemDes(item);
+							resolve();
+						}
+					}
+				});
+		});
+		promises.push(promise);
+		setTimeout(function () {
+		}, rateLimit);
+		
+	}
+
+	numOfVids = ids.length;
+	return true
+}
+
+function process_batchs(batches) {
+	let promises = [];
+	for (let x = 0; x < batches.length; x++) {
+		k = batches[x]
+		let promise = new Promise((resolve, reject) => {
+			chrome.runtime.sendMessage(
+				{ contentScriptQuery: "Des", videoIds: k },
+				function (data) {
+					if (typeof data === "undefined") {
+						console.error("error getting video");
+						resolve();
+					} else if (data && data.error) {
+						console.error("error getting video.");
+						resolve();
+					} else {
+						toRet = data
+						for (let item of data.items) {
+							let end = item.snippet.description.length > 160 ? 160 : item.snippet.description.length
+							let des = end == 160 ? item.snippet.description.substring(0, end) + " ..." : item.snippet.description
+							URLtoDes["https://www.youtube.com/watch?v=" + item.id] = des
+							addItemDes(item);
 							resolve();
 						}
 					}
@@ -97,9 +134,6 @@ function handleAPI() {
 		});
 		promises.push(promise);
 	}
-
-	numOfVids = ids.length;
-	return true
 }
 
 // Finds if the current page is running in dark or light mode to properly format elements.
@@ -169,15 +203,22 @@ function htmlToElement(html) {
 	return template.content.firstChild;
 }
 
+function addItemDes(item) {
+	addFullDes(item.id, item.snippet.description)
+}
+
 // Adds full description to the button element's parent from URLtoButton so it's ready when description is expanded.
-function addFullDes(item) {
+function addFullDes(id, des) {
 	let dark = darkOrLight();
-	let id = item.id;
-	let des = item.snippet.description;
+	// let id = item.id;
+	// let des = item.snippet.description;
 	IdToFullDes[id] = des
 	let links = Object.keys(URLtoButton);
 	let linkIds = parseUrlIds(links);
 	for (let x = 0; x < linkIds.length; x++) {
+		if (linkIds[x] === undefined) {
+			console.log("BAD LINK " + x)
+		}
 		if (cleanID(linkIds[x]) === id) {
 			// Creating button to be added to button parent element.
 			let expansionDiv = document.createElement("div")
@@ -186,6 +227,7 @@ function addFullDes(item) {
 			let expansionButton = document.createElement("button");
 			expansionDiv.appendChild(expansionButton)
 			expansionButton.innerText = "⇲";
+			expansionButton.className = "expansionButton dp-button";
 			expansionButton.addEventListener("click", function (e) {
 				// Closes description box when button is clicked on.
 				if (this.childNodes.length > 1) {
@@ -258,7 +300,6 @@ function addFullDes(item) {
 			// Disable until ready.
 			expansionButton.disabled = true;
 			expansionButton.hidden = true;
-			expansionButton.className = "expansionButton dp-button";
 			break;
 		}
 
@@ -379,7 +420,9 @@ function tabUse() {
 // Adds button to expand description under videos.
 function addButton() {
 	if (isLimited) {
-		return;
+		setTimeout(function () {
+			isLimited = false;
+		}, rateLimit);
 	}
 	let paperTab = document.querySelectorAll("#tabsContent")[0];
 	if (paperTab !== undefined) {
@@ -418,13 +461,15 @@ function addButton() {
 			}
 		}
 
+		process_batchs(parseUrlIds(ids))
+
 		parents.push(channelNames[x].className);
 		parentElements.push(channelNames[x])
 
 		let buttonExists = false
 		if (channelNames[x].id === "metadata" && channelNames[x].className !== "style-scope ytd-browse" && urls.includes(currUrl)) {
-			for (child in channelNames[x].childNodes) {
-				if (child.id == "dpButtonDiv") {
+			for (child in channelNames[x].childNodes.values()) {
+				if (child.id === "dpButtonDiv") {
 					buttonExists = true
 				}
 			}
@@ -478,7 +523,7 @@ function addButton() {
 			let dpButtonDiv = document.createElement("div");
 			dpButtonDiv.style.display = "flex";
 			dpButtonDiv.style.flexDirection = "column";
-			dpButtonDiv.id = "dpButtonDiv"
+			dpButtonDiv.class = "dpButtonDiv"
 			let button = document.createElement("button");
 			dpButtonDiv.appendChild(button)
 			button.className = "dp-button"
@@ -522,8 +567,11 @@ function addButton() {
 				} else {
 					box.className += " dark";
 				}
+
 				let buttonUrl = Object.keys(URLtoButton).find(key => URLtoButton[key] === this);
-				box.innerText = URLtoDes[cleanURL(buttonUrl)];
+				if (buttonUrl !== undefined) {
+					box.innerText = URLtoDes[cleanURL(buttonUrl)];
+				}
 
 				if (subs) {
 					box.style.maxWidth = "200px";
@@ -531,8 +579,13 @@ function addButton() {
 					box.style.maxWidth = "290px";
 				}
 				if (box.innerText === "undefined") {
-					box.innerText = "Error retrieving description, please try again.";
+					box.innerText = "Error retrieving description.";
 					dpButtonDiv.remove
+				}
+				if (box.innerText === "Error retrieving description, please try again.") {
+					process_batchs(parseUrlIds(ids))
+					// box.innerText = "Error retrieving description, please try again.";
+					// dpButtonDiv.remove
 				}
 				this.innerText = closeText;
 				this.appendChild(box);

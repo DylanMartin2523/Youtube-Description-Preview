@@ -1,0 +1,40 @@
+body {
+    background-color: #181818;
+    width: 500px;
+    border: solid;
+    border-color: #fffff8;
+    border-width: 1px;
+}
+.set {
+    color: #fffff8;
+    float: right;
+}
+.inputHeader {
+    color: #fffff8;
+}
+.left {
+    border: solid;
+    border-width: 1px;
+    border-left: none;
+    border-bottom: none;
+    border-top: none;
+    border-color: #fffff8;
+    width: 250px;
+}
+.input {
+    margin-top: 3px;
+    margin-bottom: 3px;
+    color: whitesmoke;
+}
+.input:enabled {
+    color: whitesmoke;
+}
+#reset {
+    margin-top: 3px;
+    display: block;
+}
+.key-feedback {
+    display: flex;
+    margin-top: 0px;
+    float: left;
+}

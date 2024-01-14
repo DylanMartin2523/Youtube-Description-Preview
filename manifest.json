@@ -1,6 +1,6 @@
 {
   "name": "Youtube Description Preview",
-  "version": "1.410",
+  "version": "1.500",
   "description": "Provides a unobtrusive description preview under youtube video thumbnails.",
   "permissions": ["declarativeContent", "storage"],
   "content_scripts": [

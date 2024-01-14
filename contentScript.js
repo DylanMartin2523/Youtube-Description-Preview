@@ -178,7 +178,7 @@ function dragElement(elmnt, toMove) {
 		pos4 = e.clientY;
 		// set the element's new position:
 		if (!parseFloat(toMove.style.height) == 0.0) {
-			elmnt.style.top = (parseInt(toMove.closest('#details').offsetHeight) - 13) + 'px'
+			elmnt.style.top = (parseInt(toMove.closest('#details, #details-sidebar').offsetHeight) - 13) + 'px'
 			// if (elmnt.offsetTop - pos2 <= 225) {
 			// 	elmnt.style.top = 225;
 			// } else { 
@@ -231,21 +231,26 @@ function addFullDes(id, des) {
 			expansionButton.addEventListener("click", function (e) {
 				// Closes description box when button is clicked on.
 				if (this.childNodes.length > 1) {
-					this.closest("#details").querySelector("#drag-button-dp").remove()
+					this.closest("#details, #details-sidebar").querySelector("#drag-button-dp").remove()
 					this.childNodes[1].remove();
 					this.innerText = "⇲";
 					return;
 				}
 
-				let deets = this.closest("#details")
-				deets.style.overflowY = "auto"
-				deets.style.overflowX = "hidden"
-				deets.style.overflowWrap = "anywhere"
+				let deets = this.closest("#details, #details-sidebar")
+				deets.style.overflowY = "auto";
+				deets.style.overflowX = "hidden";
+				deets.style.overflowWrap = "anywhere";
 				deets.appendChild(htmlToElement('<style id="sb_style">#details::-webkit-scrollbar{width:1px;height:11px;background-color:\
 						#f4f4f4;}#details::-webkit-scrollbar-button{}#details::-webkit-scrollbar-track{border-radius:0px;-webkit-box-shad\
 						ow:inset 0 0 6px rgba(0,0,0,0.3);background-color:#f4f4f4;}#details::-webkit-scrollbar-track-piece{}#details::-we\
 						bkit-scrollbar-thumb{border-radius:0px;background:#000;border:0px solid #666;}#details::-webkit-scrollbar-corner{\
 						}#details::-webkit-scrollbar-resizer{}</style>'))
+				deets.appendChild(htmlToElement('<style id="sb_style">#details-sidebar::-webkit-scrollbar{width:1px;height:11px;background-color:\
+					#f4f4f4;}#details-sidebar::-webkit-scrollbar-button{}#details-sidebar::-webkit-scrollbar-track{border-radius:0px;-webkit-box-shad\
+					ow:inset 0 0 6px rgba(0,0,0,0.3);background-color:#f4f4f4;}#details-sidebar::-webkit-scrollbar-track-piece{}#details-sidebar::-we\
+					bkit-scrollbar-thumb{border-radius:0px;background:#000;border:0px solid #666;}#details-sidebar::-webkit-scrollbar-corner{\
+					}#details-sidebar::-webkit-scrollbar-resizer{}</style>'))
 
 				let box = document.createElement("div");
 				box.className = "popOutBox";
@@ -295,8 +300,14 @@ function addFullDes(id, des) {
 				dragButton.style.zIndex = 1000
 				dragElement(dragButton, this.querySelector("#mydivheader"))
 			});
+			let deets = URLtoButton[links[x]].parentNode.closest("#details, #details-sidebar")
 			// Add new button to parent of base popout button element.
-			URLtoButton[links[x]].parentNode.appendChild(expansionDiv);
+			if (deets != null && deets.id === 'details-sidebar'){
+				URLtoButton[links[x]].parentNode.prepend(expansionDiv);
+			} else if (deets != null) {
+				URLtoButton[links[x]].parentNode.appendChild(expansionDiv);
+			}
+			
 			// Disable until ready.
 			expansionButton.disabled = true;
 			expansionButton.hidden = true;
@@ -327,10 +338,10 @@ function parseUrlIds(urls) {
 // Returns true if urls changed.
 // Used so addButton doesn't keep running if there is nothing to do.
 function updateVideos() {
-	let vidLinks = document.getElementsByClassName("style-scope");
+	let vidLinks = document.getElementsByClassName("yt-simple-endpoint");
 	let tempURLs = [];
 	for (let x = 0; x < vidLinks.length; x++) {
-		if ((vidLinks[x].id === "video-title" || vidLinks[x].id === "video-title-link") && !urls.includes(vidLinks[x].href)
+		if ((vidLinks[x].id === "video-title" || vidLinks[x].id === "video-title-link" || vidLinks[x].className === "yt-simple-endpoint style-scope ytd-compact-video-renderer") && !urls.includes(vidLinks[x].href)
 			&& !Object.keys(URLtoDes).includes(vidLinks[x].href)) {
 
 				if (vidLinks[x].href === undefined) {
@@ -438,6 +449,8 @@ function addButton() {
 		return;
 	}
 
+	process_batchs(parseUrlIds(ids))
+
 	let channelNames = document.getElementsByClassName("style-scope");
 	// let channelNames = document.getElementsByClassName("ytd-rich-grid-media");
 	let currUrl = "";
@@ -461,13 +474,11 @@ function addButton() {
 			}
 		}
 
-		process_batchs(parseUrlIds(ids))
-
 		parents.push(channelNames[x].className);
 		parentElements.push(channelNames[x])
 
 		let buttonExists = false
-		if (channelNames[x].id === "metadata" && channelNames[x].className !== "style-scope ytd-browse" && urls.includes(currUrl)) {
+		if (channelNames[x].id === "metadata" && urls.includes(currUrl)) {
 			for (child in channelNames[x].childNodes.values()) {
 				if (child.id === "dpButtonDiv") {
 					buttonExists = true
@@ -485,15 +496,18 @@ function addButton() {
 			let sb = false;
 			let notNeeded = false;
 			// Test for home page
-			if (parents.includes("style-scope ytd-rich-grid-media") && !parents.includes("grid style-scope ytd-rich-movie-renderer")) {
+			if ((parents.includes("style-scope ytd-rich-grid-media") || parents.includes('details style-scope ytd-compact-video-renderer')) && !parents.includes("grid style-scope ytd-rich-movie-renderer")) {
 				home = true;
+			}
+			if (parents.includes('details style-scope ytd-compact-video-renderer') && !parents.includes("grid style-scope ytd-rich-movie-renderer")) {
+				sidebar = true;
 			}
 			if (parents.includes("style-scope ytd-grid-video-renderer") && !home) {
 				subs = true;
 			}
-			if (parents.includes("style-scope ytd-compact-video-renderer") && !home && !subs) {
-				sidebar = true;
-			}
+			// if (parents.includes("style-scope ytd-compact-video-renderer") && !home && !subs) {
+			// 	sidebar = true;
+			// }
 			if (parents.includes("style-scope ytd-rich-grid-movie")) {
 				movie = true;
 			} if (parents.includes("style-scope ytd-searchbox")) {
@@ -502,8 +516,8 @@ function addButton() {
 				notNeeded = true;
 			}
 			if (notNeeded) { continue; }
-			if ((sidebar || movie || sb) && !home && !subs) { continue; }
-			if (!home && !subs && !sidebar) {
+			if ((movie || sb) && !home && !subs) { continue; }
+			if (!home && !subs) {
 				parents = [];
 				continue;
 			}
@@ -522,7 +536,13 @@ function addButton() {
 
 			let dpButtonDiv = document.createElement("div");
 			dpButtonDiv.style.display = "flex";
-			dpButtonDiv.style.flexDirection = "column";
+			if (sidebar) {
+				dpButtonDiv.style.flexDirection = "column-reverse";
+				dpButtonDiv.style.alignItems = "flex-start";
+			} else {
+				dpButtonDiv.style.flexDirection = "column";
+			}
+			
 			dpButtonDiv.class = "dpButtonDiv"
 			let button = document.createElement("button");
 			dpButtonDiv.appendChild(button)
@@ -535,75 +555,20 @@ function addButton() {
 			button.id = "description-view";
 			// channelNames[x].appendChild(button)
 			if (Object.keys(URLtoDes).includes(cleanURL(currUrl))) {
-				channelNames[x].appendChild(dpButtonDiv)
+				if (sidebar) {
+					parentDiv = channelNames[x].querySelector("div").closest(".style-scope ytd-compact-video-renderer")
+					parentDiv.appendChild(dpButtonDiv);
+					parentDiv.style.flexWrap = "wrap";
+					parentDiv.id = "details-sidebar";
+				} else {
+					channelNames[x].appendChild(dpButtonDiv);
+				}
 			}
 			URLtoButton[currUrl] = button;
-			button.addEventListener("click", function () {
-				if (this.childNodes.length > 1) {
-					this.childNodes[1].remove();
-					this.innerText = openText;
-					if (apiSet) {
-						try {
-							this.parentNode.getElementsByClassName("expansionButton")[0].disabled = true;
-							this.parentNode.getElementsByClassName("expansionButton")[0].hidden = true;
-						} catch (e) {
-							console.error(e);
-						}
-
-						try {
-							this.closest("#details").querySelector("#drag-button-dp").hidden = true;
-							this.closest("#details").querySelector("#drag-button-dp").disabled = true;
-						} catch (e) {
-							console.error(e);
-						}
-
-					}
-					return;
-				}
-				let box = document.createElement("a");
-				box.className = "textBox";
-				if (!dark) {
-					box.className += " light";
-				} else {
-					box.className += " dark";
-				}
-
-				let buttonUrl = Object.keys(URLtoButton).find(key => URLtoButton[key] === this);
-				if (buttonUrl !== undefined) {
-					box.innerText = URLtoDes[cleanURL(buttonUrl)];
-				}
-
-				if (subs) {
-					box.style.maxWidth = "200px";
-				} else {
-					box.style.maxWidth = "290px";
-				}
-				if (box.innerText === "undefined") {
-					box.innerText = "Error retrieving description.";
-					dpButtonDiv.remove
-				}
-				if (box.innerText === "Error retrieving description, please try again.") {
-					process_batchs(parseUrlIds(ids))
-					// box.innerText = "Error retrieving description, please try again.";
-					// dpButtonDiv.remove
-				}
-				this.innerText = closeText;
-				this.appendChild(box);
-				try {
-					let exBut = this.parentNode.getElementsByClassName("expansionButton")[0];
-					if (!dark) {
-						exBut.classList.add("light");
-					}
-					this.parentNode.getElementsByClassName("expansionButton")[0].disabled = false;
-					this.parentNode.getElementsByClassName("expansionButton")[0].hidden = false;
-					this.closest("#details").querySelector("#drag-button-dp").hidden = false;
-					this.closest("#details").querySelector("#drag-button-dp").disabled = false;
-				} catch (e) {
-					console.error(e);
-				}
-
-			});
-
+			button.addEventListener("click", processButtonPress);
+			button.dark = dark;
+			button.subs = subs;
+			button.sidebar = sidebar;
 		}
 	}
 	isLimited = true;
@@ -640,4 +605,77 @@ function readNewDom(dom, url) {
 	}
 
 
+}
+
+function processButtonPress(evt) {
+	evt.cancelBubble = true;
+    if (evt.stopPropagation) {
+		evt.stopPropagation();
+	}
+	if (this.childNodes.length > 1) {
+		this.childNodes[1].remove();
+		this.innerText = openText;
+		if (apiSet) {
+			try {
+				this.parentNode.getElementsByClassName("expansionButton")[0].disabled = true;
+				this.parentNode.getElementsByClassName("expansionButton")[0].hidden = true;
+			} catch (e) {
+				console.error(e);
+			}
+
+			try {
+				this.closest("#details, #details-sidebar").querySelector("#drag-button-dp").hidden = true;
+				this.closest("#details, #details-sidebar").querySelector("#drag-button-dp").disabled = true;
+			} catch (e) {
+				console.error(e);
+			}
+
+		}
+		return;
+	}
+	let box = document.createElement("a");
+	box.className = "textBox";
+	if (!evt.currentTarget.dark) {
+		box.className += " light";
+	} else {
+		box.className += " dark";
+	}
+
+	let buttonUrl = Object.keys(URLtoButton).find(key => URLtoButton[key] === this);
+	if (buttonUrl !== undefined) {
+		box.innerText = URLtoDes[cleanURL(buttonUrl)];
+	}
+
+	if (evt.currentTarget.subs) {
+		box.style.maxWidth = "200px";
+	} else {
+		box.style.maxWidth = "290px";
+	}
+	if (box.innerText === "undefined") {
+		box.innerText = "Error retrieving description.";
+		dpButtonDiv.remove
+	}
+	if (box.innerText === "Error retrieving description, please try again.") {
+		process_batchs(parseUrlIds(ids))
+		box.innerText = "Loading description...";
+		// dpButtonDiv.remove
+		this.innerText = closeText;
+		this.appendChild(box);
+		processButtonPress()
+		return
+	}
+	this.innerText = closeText;
+	this.appendChild(box);
+	try {
+		let exBut = this.parentNode.getElementsByClassName("expansionButton")[0];
+		if (!evt.currentTarget.dark) {
+			exBut.classList.add("light");
+		}
+		this.parentNode.getElementsByClassName("expansionButton")[0].disabled = false;
+		this.parentNode.getElementsByClassName("expansionButton")[0].hidden = false;
+		this.closest("#details, #details-sidebar").querySelector("#drag-button-dp").hidden = false;
+		this.closest("#details, #details-sidebar").querySelector("#drag-button-dp").disabled = false;
+	} catch (e) {
+		console.error(e);
+	}
 }

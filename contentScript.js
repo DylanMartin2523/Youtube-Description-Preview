@@ -106,7 +106,7 @@ function handleAPI() {
 	return true
 }
 
-function process_batchs(batches) {
+async function process_batchs(batches) {
 	let promises = [];
 	for (let x = 0; x < batches.length; x++) {
 		k = batches[x]
@@ -607,25 +607,46 @@ function readNewDom(dom, url) {
 
 }
 
-function processButtonPress(evt) {
+function sleep(ms) {
+	return new Promise(resolve => setTimeout(resolve, ms));
+  }
+  
+  async function demo() {
+	console.log('Taking a break...');
+	await sleep(2000);
+	console.log('Two second later');
+  }
+
+async function processButtonPress(evt, passedObj=undefined, eventTarget=undefined) {
+	if (passedObj !== undefined) {
+		parentObj = passedObj 
+	} else {
+		parentObj = this
+	}
+
+
+	if (eventTarget !== undefined && evt.currentTarget === undefined) {
+		evt.currentTarget = eventTarget 
+	}
+	
 	evt.cancelBubble = true;
     if (evt.stopPropagation) {
 		evt.stopPropagation();
 	}
-	if (this.childNodes.length > 1) {
-		this.childNodes[1].remove();
-		this.innerText = openText;
+	if (passedObj === undefined && parentObj.childNodes.length > 1) {
+		parentObj.childNodes[1].remove();
+		parentObj.innerText = openText;
 		if (apiSet) {
 			try {
-				this.parentNode.getElementsByClassName("expansionButton")[0].disabled = true;
-				this.parentNode.getElementsByClassName("expansionButton")[0].hidden = true;
+				parentObj.parentNode.getElementsByClassName("expansionButton")[0].disabled = true;
+				parentObj.parentNode.getElementsByClassName("expansionButton")[0].hidden = true;
 			} catch (e) {
 				console.error(e);
 			}
 
 			try {
-				this.closest("#details, #details-sidebar").querySelector("#drag-button-dp").hidden = true;
-				this.closest("#details, #details-sidebar").querySelector("#drag-button-dp").disabled = true;
+				parentObj.closest("#details, #details-sidebar").querySelector("#drag-button-dp").hidden = true;
+				parentObj.closest("#details, #details-sidebar").querySelector("#drag-button-dp").disabled = true;
 			} catch (e) {
 				console.error(e);
 			}
@@ -635,18 +656,18 @@ function processButtonPress(evt) {
 	}
 	let box = document.createElement("a");
 	box.className = "textBox";
-	if (!evt.currentTarget.dark) {
+	if (evt.currentTarget !== null && !evt.currentTarget.dark) {
 		box.className += " light";
-	} else {
+	} else if (evt.currentTarget !== null){
 		box.className += " dark";
 	}
 
-	let buttonUrl = Object.keys(URLtoButton).find(key => URLtoButton[key] === this);
+	let buttonUrl = Object.keys(URLtoButton).find(key => URLtoButton[key] === parentObj);
 	if (buttonUrl !== undefined) {
 		box.innerText = URLtoDes[cleanURL(buttonUrl)];
 	}
 
-	if (evt.currentTarget.subs) {
+	if (evt.currentTarget !== null && evt.currentTarget.subs) {
 		box.style.maxWidth = "200px";
 	} else {
 		box.style.maxWidth = "290px";
@@ -656,25 +677,34 @@ function processButtonPress(evt) {
 		dpButtonDiv.remove
 	}
 	if (box.innerText === "Error retrieving description, please try again.") {
-		process_batchs(parseUrlIds(ids))
+		await process_batchs(parseUrlIds(ids))
 		box.innerText = "Loading description...";
 		// dpButtonDiv.remove
-		this.innerText = closeText;
-		this.appendChild(box);
-		processButtonPress()
+		parentObj.innerText = closeText;
+		parentObj.appendChild(box);
+		while (URLtoDes[cleanURL(buttonUrl)] === "Error retrieving description, please try again.") {
+			box.innerText = "Loading description..";
+			await sleep(500)
+			box.innerText = "Loading description.";
+			await sleep(500)
+			box.innerText = "Loading description..";
+			await sleep(500)
+			box.innerText = "Loading description...";
+		}
+		processButtonPress(evt, passedObj=this, eventTarget=evt.currentTarget)
 		return
 	}
-	this.innerText = closeText;
-	this.appendChild(box);
+	parentObj.innerText = closeText;
+	parentObj.appendChild(box);
 	try {
-		let exBut = this.parentNode.getElementsByClassName("expansionButton")[0];
-		if (!evt.currentTarget.dark) {
+		let exBut = parentObj.parentNode.getElementsByClassName("expansionButton")[0];
+		if (evt.currentTarget !== null && !evt.currentTarget.dark) {
 			exBut.classList.add("light");
 		}
-		this.parentNode.getElementsByClassName("expansionButton")[0].disabled = false;
-		this.parentNode.getElementsByClassName("expansionButton")[0].hidden = false;
-		this.closest("#details, #details-sidebar").querySelector("#drag-button-dp").hidden = false;
-		this.closest("#details, #details-sidebar").querySelector("#drag-button-dp").disabled = false;
+		parentObj.parentNode.getElementsByClassName("expansionButton")[0].disabled = false;
+		parentObj.parentNode.getElementsByClassName("expansionButton")[0].hidden = false;
+		parentObj.closest("#details, #details-sidebar").querySelector("#drag-button-dp").hidden = false;
+		parentObj.closest("#details, #details-sidebar").querySelector("#drag-button-dp").disabled = false;
 	} catch (e) {
 		console.error(e);
 	}
